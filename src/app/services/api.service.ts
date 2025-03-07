@@ -11,7 +11,9 @@ const supabase = createClient(environment.PROJECT_URL, environment.API_KEY);
 export class ApiService {
   logged_in = false;
   private teacher: any;
-  private student: any; // ✅ Holds logged-in student details
+  private student: any;
+  private admin: any = null;
+ // ✅ Holds logged-in student details
 
   constructor() {}
 
@@ -221,60 +223,60 @@ private async updateAttendanceSummary(attendanceRecords: { student_id: number; s
   }
 
   // ✅ Login function (Fixed `this.supabase`)
-  async login(email: string, password: string, loginType: 'students' | 'teachers') {
+  async login(email: string, password: string) {
     try {
       let query;
+      let userType: 'students' | 'teachers' | 'admin' | null = null;
   
-      if (loginType === 'students') {
-        query = supabase
-          .from('students')
-          .select(`
-            id, 
-            name, 
-            email, 
-            usn_number, 
-            section_id, 
-            sections (
-              section_name, 
-              year_table (
-                _year, 
-                course ( name ), 
-                subjects ( id, name )
-              )
-            )
-          `)
-          .eq('email', email)
-          .eq('password', password);
-      }
-      
-       else {
-        query = supabase
-          .from('teachers')
-          .select('id, name, email, subjects (id, name, year_id)') // ✅ Fetch subjects too
-          .eq('email', email)
-          .eq('password', password);
-      }
+      // 🔍 Check if the user is an admin
+      query = supabase.from('admin').select('id, name, email').eq('email', email).eq('password', password);
+      let { data, error } = await query.single();
   
-      const { data, error } = await query.single();
-  
-      if (error) {
-        console.error("🔴 Supabase Error:", error);
-        return { success: false, message: "Database error: " + error.message };
-      }
-  
-      // ✅ Store teacher/student in service
-      if (loginType === 'teachers') {
-        this.teacher = data;  // ✅ Store logged-in teacher
+      if (data) {
+        userType = 'admin';
       } else {
-        this.student = data;  // ✅ Store logged-in student
+        // 🔍 Check if the user is a teacher
+        query = supabase.from('teachers').select('id, name, email, subjects (id, name, year_id)').eq('email', email).eq('password', password);
+        ({ data, error } = await query.single());
+  
+        if (data) {
+          userType = 'teachers';
+        } else {
+          // 🔍 Check if the user is a student
+          query = supabase.from('students').select(`
+            id, name, email, usn_number, section_id, 
+            sections (section_name, year_table (_year, course ( name ), subjects ( id, name )))
+          `).eq('email', email).eq('password', password);
+          ({ data, error } = await query.single());
+  
+          if (data) {
+            userType = 'students';
+          }
+        }
       }
   
-      return { success: true, data, userType: loginType };
+      if (!userType) {
+        console.error("🔴 No matching user found");
+        return { success: false, message: "Invalid email or password" };
+      }
+  
+      // ✅ Store logged-in user
+      if (userType === 'teachers') {
+        this.teacher = data;
+      } else if (userType === 'students') {
+        this.student = data;
+      } else if (userType === 'admin') {
+        this.admin = data;
+      }
+
+  
+      return { success: true, data, userType };
     } catch (err) {
       console.error("❌ API Error:", err);
       return { success: false, message: "Unexpected error. Please try again." };
     }
   }
+  
   
 
    // ✅ Get logged-in student

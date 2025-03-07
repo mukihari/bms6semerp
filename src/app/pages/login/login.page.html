@@ -1,61 +1,42 @@
 <ion-content [fullscreen]="true">
   
-    <ion-toast #toast></ion-toast>  
+        <ion-toast 
+        [isOpen]="isOpen"
+        [message]="message"
+        [color]="color"
+        position="top"
+        duration="2000">
+      </ion-toast>
   
-    <br><br><br>
-  
-    <ion-grid fixed="true">
-  
-      @if (login_type === '') {
-        <ion-row>
-          <ion-col>
-            <ion-card (click)="login_type = 'students'" class="card-special">
-              Sign in as Student
-            </ion-card>
-          </ion-col>
-          
-          <ion-col>
-            <ion-card (click)="login_type = 'teachers'" class="card-special">
-              Sign in as Faculty
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      } @else {
-  
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>Login as {{ login_type === 'students' ? 'Student' : 'Faculty' }}</ion-card-title>
-          </ion-card-header>
-  
-          <ion-card-content>
-            <ion-item>
-              <ion-input placeholder="Email" [(ngModel)]="email"></ion-input>
-            </ion-item>
-  
-            <ion-item>
-              <ion-input placeholder="Password" type="password" [(ngModel)]="password"></ion-input>
-            </ion-item>
-  
-            <ion-item lines="none">
-              <ion-button expand="full" (click)="login()">
-                Login
-              </ion-button>
-            </ion-item>
-  
-            @if (loading) {
-              <ion-progress-bar type="indeterminate"></ion-progress-bar>
-            }
-  
-            <ion-item lines="none">
-              <ion-button color="danger" expand="full" (click)="login_type = ''">
-                Back
-              </ion-button>
-            </ion-item>
-            
-          </ion-card-content>
-        </ion-card>
-  
-      }
-    </ion-grid>
-  </ion-content>
-  
+
+  <br><br><br>
+
+  <ion-grid fixed="true">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Login</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <ion-item>
+          <ion-input placeholder="Email" [(ngModel)]="email"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input placeholder="Password" type="password" [(ngModel)]="password" (keydown.enter)="login()"></ion-input>
+        </ion-item>
+
+        <ion-item lines="none">
+          <ion-button expand="full" (click)="login()">
+            Login
+          </ion-button>
+        </ion-item>
+
+        @if (loading) {
+          <ion-progress-bar type="indeterminate"></ion-progress-bar>
+        }
+      </ion-card-content>
+    </ion-card>
+  </ion-grid>
+
+</ion-content>
