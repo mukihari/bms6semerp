@@ -1,0 +1,65 @@
+<ion-content [fullscreen]="true">
+  <ion-header [translucent]="true">
+    <ion-toolbar>
+      <ion-title>Student Dashboard</ion-title>
+      <ion-button slot="end" color="danger" (click)="logout()">Logout</ion-button>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-grid class="dashboard-grid" *ngIf="student">
+    <ion-row>
+      <ion-col size="12">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Welcome, {{ student.name }}</ion-card-title>
+            <ion-card-subtitle>USN: {{ student.usn_number }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ion-item>
+                <ion-label><strong>Email:</strong> {{ student.email }}</ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label><strong>Section:</strong> {{ student.sections?.section_name }}</ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label><strong>Year:</strong> {{ student.sections?.year_table?._year }}</ion-label>
+              </ion-item>
+              <ion-item>
+                <ion-label><strong>Course:</strong> {{ student.sections?.year_table?.course?.name }}</ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Attendance</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list *ngIf="attendanceRecords && getKeys(attendanceRecords).length > 0; else noSubjects">
+              <ion-item *ngFor="let subjectId of getKeys(attendanceRecords)">            
+                <ion-label>
+                  <h2>{{ subjectNames[subjectId] || 'Unknown Subject from HTML' }}</h2>  <!-- ✅ FIXED -->
+                  <p>
+                    Attended: {{ attendanceRecords[subjectId].attended || 0 }} /
+                              {{ attendanceRecords[subjectId].total || 0 }}
+                  </p>
+                </ion-label>
+              </ion-item>
+            </ion-list>
+            <ng-template #noSubjects>
+              <ion-item>
+                <ion-label>🚫 No attendance records found</ion-label>
+              </ion-item>
+            </ng-template>
+          </ion-card-content>
+        </ion-card>
+        
+        
+
+
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

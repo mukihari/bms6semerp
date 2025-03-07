@@ -1,0 +1,30 @@
+<ion-app>
+  @if(logged_in){
+    <ion-split-pane contentId="main-content">
+      <ion-menu contentId="main-content" type="overlay">
+        <ion-content>
+          <ion-list id="inbox-list">
+            <ion-list-header>Inbox</ion-list-header>
+            <ion-note>{{'bms@support.in'}}</ion-note>
+  
+            <ion-menu-toggle auto-hide="false" >
+              <ion-item routerDirection="root" routerLink="home"  lines="none" detail="false" routerLinkActive="selected" button>
+                
+                <ion-label>Home</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+          </ion-list>
+  
+          <ion-list id="labels-list">
+            <ion-list-header>Support</ion-list-header>
+             <ion-item  button>
+                Contact Us
+             </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-menu>
+     
+    </ion-split-pane>
+  }
+  <ion-router-outlet id="main-content"></ion-router-outlet>
+</ion-app>

@@ -1,0 +1,110 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Home</ion-title>
+    <ion-button slot="end" color="danger" (click)="logout()">Logout</ion-button>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-grid fixed="true">
+    
+    <!-- ✅ Teacher Details Card -->
+    <ion-card *ngIf="teacher">
+      <ion-item>
+        <ion-label>
+          <h2>👨‍🏫 {{ teacher.name }}</h2>
+          <p>{{ teacher.email }}</p>
+          <p *ngIf="courses.length">📚 {{ courses[0]?.name }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-card>
+
+    <!-- ✅ Year Tabs -->
+    <ion-row>
+      <ion-col>
+        <ion-segment mode="ios" (ionChange)="segmentChanged($event)">
+          <ion-segment-button *ngFor="let year of years" [value]="year">
+            Year {{ year }}
+          </ion-segment-button>
+        </ion-segment>
+
+        <!-- ✅ Display Subjects Under Selected Year -->
+        <div *ngIf="subjectsByYear[selectedYear] && subjectsByYear[selectedYear].length">
+          <h3>📚 Subject:</h3>
+          <p><strong>{{ subjectsByYear[selectedYear][0]?.name || '❌ No Subject Found' }}</strong></p>
+        </div>
+        
+        <!-- ✅ Search Bar -->
+        <ion-searchbar (ionInput)="updateSearch($event)" placeholder="Search students"></ion-searchbar>
+
+        <!-- ✅ Section Filter Chips -->
+        <ion-chip (click)="selectSection('all')" [color]="selectedSection === 'all' ? 'primary' : 'medium'">
+          All
+        </ion-chip>
+
+        <ion-chip *ngFor="let section of sections" 
+          (click)="selectSection(section)"
+          [color]="selectedSection === section ? 'primary' : 'medium'">
+          {{ section }}
+        </ion-chip>
+
+       
+        <!-- Date Picker -->
+        <ion-item>
+          <ion-label>Date</ion-label>
+          <ion-datetime 
+            display-format="YYYY-MM-DD" 
+            [(ngModel)]="selectedDate" 
+            presentation="date"
+            [max]="maxDate">
+          </ion-datetime>
+        </ion-item>
+        
+        <!-- ✅ Student List -->
+        <div *ngIf="filteredStudents.length; else noStudents">
+          <ion-card *ngFor="let student of filteredStudents">
+            <ion-item>
+              <ion-label>
+                {{ student.name || '❌ Name Missing' }}
+              </ion-label>
+              <ion-chip slot="end">{{ student.sections?.section_name || 'NA' }}</ion-chip>
+              <ion-item>
+                <ion-label>Mark Attendance</ion-label>
+                <ion-segment [(ngModel)]="attendanceEntries[student.id]">
+                  <ion-segment-button value="Present">Present</ion-segment-button>
+                  <ion-segment-button value="Absent">Absent</ion-segment-button>
+                </ion-segment>
+              </ion-item>
+            </ion-item>
+          </ion-card>
+        </div>
+
+        <ion-button expand="full" color="primary" (click)="submitAttendance()" [disabled]="!selectedSubject">
+          Submit Attendance
+        </ion-button>
+        
+        <!-- ✅ Skeleton Loader When No Students Found -->
+        <ng-template #noStudents>
+          <ion-item>
+            <ion-skeleton-text animated="true" style="width: 80%; height: 10px;"></ion-skeleton-text>
+          </ion-item>
+        </ng-template>
+
+      </ion-col>
+    </ion-row>
+
+    <ion-card-header>
+      <ion-card-title>Attendance for {{ currentDate }}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-list>
+        <ion-item *ngFor="let student of filteredStudents">
+          <ion-label>
+            {{ student.name }}
+            <p>Attended: {{ attendanceRecords[student.id].attended || 0 }} / {{ attendanceRecords[student.id].total || 0 }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </ion-card-content>
+  </ion-grid>
+</ion-content>

@@ -1,0 +1,17 @@
+.card-special {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center;     /* Center vertically */
+    height: 150px;           /* Set a height for the card */
+    text-align: center;      /* Ensure text alignment is centered */
+    font-size: 18px;         /* Adjust font size as needed */
+    font-weight: bold;       /* Make the text bold (optional) */
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .card-special:hover{
+    background-color: #377ca3bb;
+  }
+  
