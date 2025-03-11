@@ -460,5 +460,44 @@ async getStudentsBySubject(subjectId: number) {
     }
     return this.teacher;
   }
-  
+
+  // ✅ Fetch all students
+  async getAllStudents() {
+    const { data, error } = await supabase.from('students').select(`
+      id, name, email, usn_number, section_id,
+      sections (section_name, year_table (_year, course ( name ), subjects ( id, name )))
+    `);
+    if (error) {
+      console.error('❌ Error fetching all students:', error);
+      return [];
+    }
+    return data;
+  }
+
+  // ✅ Fetch all teachers
+  async getAllTeachers() {
+    const { data, error } = await supabase.from('teachers').select(`
+      id, name, email,
+      subjects (id, name, year_id)
+    `);
+    if (error) {
+      console.error('❌ Error fetching all teachers:', error);
+      return [];
+    }
+    return data;
+  }
+
+  // ✅ Fetch all subjects
+  async getAllSubjects() {
+    const { data, error } = await supabase.from('subjects').select(`
+      id, name, year_id,
+      year_table (course (name))
+    `);
+    if (error) {
+      console.error('❌ Error fetching all subjects:', error);
+      return [];
+    }
+    return data;
+  }
 }
+  

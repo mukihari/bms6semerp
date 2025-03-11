@@ -1,14 +1,99 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>Admin-dashboard</ion-title>
+    <ion-title>Admin Dashboard</ion-title>
     <ion-button slot="end" color="danger" (click)="logout()">Logout</ion-button>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">admin-dashboard</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-grid fixed="true">
+    
+    <!-- ✅ Course Tabs -->
+    <ion-segment [(ngModel)]="selectedCourse" mode="md">
+      <ion-segment-button value="all">
+        <ion-label>All Courses</ion-label>
+      </ion-segment-button>
+      <ion-segment-button *ngFor="let course of courses" [value]="course">
+        <ion-label>{{ course }}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <!-- ✅ Year Tabs -->
+    <ion-segment [(ngModel)]="selectedYear" mode="md">
+      <ion-segment-button value="0">
+        <ion-label>All Years</ion-label>
+      </ion-segment-button>
+      <ion-segment-button *ngFor="let year of years" [value]="year">
+        <ion-label>Year {{ year }}</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+    
+    <!-- ✅ Search Bar -->
+    <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search students"></ion-searchbar>
+    
+    <!-- ✅ Section Filter Chips -->
+    <div class="filter-container">
+      <ion-chip (click)="selectSection('all')" [color]="selectedSection === 'all' ? 'primary' : 'medium'">
+        All
+      </ion-chip>
+      <ion-chip *ngFor="let section of sections" (click)="selectSection(section)" [color]="selectedSection === section ? 'primary' : 'medium'">
+        {{ section }}
+      </ion-chip>
+    </div>
+
+    <!-- ✅ Students List -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>All Students</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let student of filteredStudents">
+            <ion-label>
+              <h2>{{ student.name }}</h2>
+              <p>{{ student.email }}</p>
+              <p>{{ student.sections?.section_name || 'NA' }}</p>
+              <p>{{ student.sections?.year_table?.course?.name || 'NA' }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- ✅ Teachers List -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>All Teachers</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let teacher of teachers">
+            <ion-label>
+              <h2>{{ teacher.name }}</h2>
+              <p>{{ teacher.email }}</p>
+              <p *ngFor="let subject of teacher.subjects">📚 {{ subject.name }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- ✅ Subjects List -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>All Subjects</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let subject of subjects">
+            <ion-label>
+              <h2>{{ subject.name }}</h2>
+              <p>{{ subject.year_table?.course?.name || 'NA' }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+
+  </ion-grid>
 </ion-content>
