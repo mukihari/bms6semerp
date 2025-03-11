@@ -8,25 +8,20 @@
 <ion-content [fullscreen]="true">
   <ion-grid fixed="true">
     
-    <!-- ✅ Course Tabs -->
-    <ion-segment [(ngModel)]="selectedCourse" mode="md">
-      <ion-segment-button value="all">
-        <ion-label>All Courses</ion-label>
-      </ion-segment-button>
-      <ion-segment-button *ngFor="let course of courses" [value]="course">
-        <ion-label>{{ course }}</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+    <!-- Remove "All Courses" -->
+<ion-segment [(ngModel)]="selectedCourse" mode="md" (ionChange)="filterStudents()">
+  <ion-segment-button *ngFor="let course of courses" [value]="course">
+    <ion-label>{{ course }}</ion-label>
+  </ion-segment-button>
+</ion-segment>
 
-    <!-- ✅ Year Tabs -->
-    <ion-segment [(ngModel)]="selectedYear" mode="md">
-      <ion-segment-button value="0">
-        <ion-label>All Years</ion-label>
-      </ion-segment-button>
-      <ion-segment-button *ngFor="let year of years" [value]="year">
-        <ion-label>Year {{ year }}</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+<!-- Remove "All Years" -->
+<ion-segment [(ngModel)]="selectedYear" mode="md" (ionChange)="filterStudents()">
+  <ion-segment-button *ngFor="let year of years" [value]="year">
+    <ion-label>Year {{ year }}</ion-label>
+  </ion-segment-button>
+</ion-segment>
+
     
     <!-- ✅ Search Bar -->
     <ion-searchbar [(ngModel)]="searchQuery" placeholder="Search students"></ion-searchbar>
