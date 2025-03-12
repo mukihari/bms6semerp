@@ -6,7 +6,7 @@ import { IonButton, IonContent, IonHeader, IonTitle, IonToolbar, IonGrid, IonRow
 } from '@ionic/angular/standalone';
 import { ApiService } from 'src/app/services/api.service';
 import { NavController } from '@ionic/angular';
-
+ 
 @Component({
   selector: 'app-teacher-dashboard',
   templateUrl: './teacher-dashboard.page.html',
@@ -35,6 +35,9 @@ export class TeacherDashboardPage implements OnInit {
   selectedDate: string = new Date().toISOString().split('T')[0]; // ✅ Default to today
   attendanceEntries: Record<string, 'Present' | 'Absent'> = {};
   attendanceRecords: Record<string, { attended: number; total: number }> = {};
+  marksEntries: Record<string, number> = {}; // Stores marks inputs
+  marksRecords: Record<string, { ia1: number; ia2: number; total: number }> = {}; // Stores fetched marks
+  selectedIA: string = "IA1"; // Default IA selection
 
   constructor() {}
 
@@ -56,7 +59,64 @@ export class TeacherDashboardPage implements OnInit {
       console.error("❌ Error loading data:", error);
     }
   }
+  async loadMarks(subjectId: number) {
+    try {
+      const records = await this.api.getMarksRecords(subjectId);
+  
+      this.marksRecords = {}; // ✅ Initialize it first
+      this.students.forEach(student => {
+        this.marksRecords[student.id] = { ia1: 0, ia2: 0, total: 0 }; // ✅ Use `0` instead of `null`
+      });
+  
+      // ✅ Map existing marks data
+      records.forEach(record => {
+        if (this.marksRecords[record.student_id]) {
+          this.marksRecords[record.student_id].ia1 = record.ia1_marks || 0;
+          this.marksRecords[record.student_id].ia2 = record.ia2_marks || 0;
+          this.marksRecords[record.student_id].total = record.total_ia || 0;
+        }
+      });
+  
+      console.log("📊 Marks Data:", this.marksRecords); // ✅ Debugging log
+    } catch (error) {
+      console.error("❌ Error fetching marks records:", error);
+    }
+  }
+  
+  
+  async submitMarks() {
+    if (!this.selectedSubject) {
+      alert("❌ Please select a subject before submitting marks.");
+      return;
+    }
+  
+    const marksData = this.students
+  .filter(student => this.marksEntries[student.id] !== undefined)
+  .map(student => ({
+    student_id: student.id,
+    subject_id: this.selectedSubject,
+    ia1_marks: this.selectedIA === "IA1" ? this.marksEntries[student.id] ?? undefined : undefined,
+    ia2_marks: this.selectedIA === "IA2" ? this.marksEntries[student.id] ?? undefined : undefined,
+    total_ia: this.selectedIA === "TotalIA" ? this.marksEntries[student.id] ?? undefined : undefined,
+    date: new Date().toISOString().split('T')[0]
+  }));
 
+  
+    if (marksData.length === 0) {
+      alert("⚠ No marks entered.");
+      return;
+    }
+  
+    try {
+      const result = await this.api.submitMarks(this.selectedSubject, marksData);
+      alert(result.message || "✅ Marks submitted successfully.");
+      await this.loadMarks(this.selectedSubject);
+    } catch (error) {
+      console.error("❌ Error submitting marks:", error);
+      alert("⚠ Failed to submit marks.");
+    }
+  }
+  
   segmentChanged(event: any) {
     this.selectedYear = Number(event.detail.value);
     this.updateSelectedSubject();

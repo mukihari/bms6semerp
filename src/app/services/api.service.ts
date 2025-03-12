@@ -4,7 +4,7 @@ import { environment } from 'src/environments/environment';
 
 // ✅ Initialize Supabase client
 const supabase = createClient(environment.PROJECT_URL, environment.API_KEY);
-
+ 
 @Injectable({
   providedIn: 'root'
 })
@@ -191,6 +191,75 @@ private async updateAttendanceSummary(attendanceRecords: { student_id: number; s
   }
 }
 
+async getMarksRecords(subjectId: number) {
+  try {
+    const { data, error } = await supabase
+      .from('marks_summary')
+      .select('student_id, ia1_marks, ia2_marks, total_ia')
+      .eq('subject_id', subjectId);
+
+    if (error) {
+      console.error('❌ Error fetching marks records:', error);
+      return [];
+    }
+
+    return data || []; // Return an empty array if no records exist
+  } catch (err) {
+    console.error('❌ Unexpected error fetching marks:', err);
+    return [];
+  }
+}
+
+async submitMarks(subjectId: number, marksData: { student_id: number; ia1_marks?: number; ia2_marks?: number; total_ia?: number }[]) {
+  try {
+    // Iterate over each student's marks and insert or update
+    for (const mark of marksData) {
+      const { data: existingMark, error } = await supabase
+        .from('marks_summary')
+        .select('id')
+        .eq('student_id', mark.student_id)
+        .eq('subject_id', subjectId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ Error checking existing marks:', error);
+        continue;
+      }
+
+      if (existingMark) {
+        // ✅ Update existing record
+        const { error: updateError } = await supabase
+          .from('marks_summary')
+          .update({
+            ia1_marks: mark.ia1_marks,
+            ia2_marks: mark.ia2_marks,
+            total_ia: mark.total_ia
+          })
+          .eq('id', existingMark.id);
+
+        if (updateError) console.error('❌ Error updating marks:', updateError);
+      } else {
+        // ✅ Insert new record if not found
+        const { error: insertError } = await supabase
+          .from('marks_summary')
+          .insert({
+            student_id: mark.student_id,
+            subject_id: subjectId,
+            ia1_marks: mark.ia1_marks,
+            ia2_marks: mark.ia2_marks,
+            total_ia: mark.total_ia
+          });
+
+        if (insertError) console.error('❌ Error inserting marks:', insertError);
+      }
+    }
+
+    return { success: true, message: 'Marks submitted successfully' };
+  } catch (err) {
+    console.error('❌ Unexpected error submitting marks:', err);
+    return { success: false, message: 'Unexpected error' };
+  }
+}
 
   // ✅ Fetch complete student details (for dashboard)
   async getStudentDetails() {

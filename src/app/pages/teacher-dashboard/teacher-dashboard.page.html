@@ -4,7 +4,7 @@
     <ion-button slot="end" color="danger" (click)="logout()">Logout</ion-button>
   </ion-toolbar>
 </ion-header>
-
+ 
 <ion-content [fullscreen]="true">
   <ion-grid fixed="true">
     
@@ -105,6 +105,32 @@
           </ion-label>
         </ion-item>
       </ion-list>
+
+      <!-- ✅ Marks Entry Section -->
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>✍️ Enter Marks</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-list>
+      <ion-item *ngFor="let student of filteredStudents">
+        <ion-label>{{ student.name || "No Name Available" }}</ion-label>
+        <ion-input [(ngModel)]="marksRecords[student.id].ia1" placeholder="IA-1"></ion-input>
+        <ion-input [(ngModel)]="marksRecords[student.id].ia2" placeholder="IA-2"></ion-input>
+        <ion-input [(ngModel)]="marksRecords[student.id].total" placeholder="Total IA"></ion-input>
+        
+      </ion-item>
+    </ion-list>
+
+    <ion-button expand="full" color="success" (click)="submitMarks()">
+      Submit Marks
+    </ion-button>
+  </ion-card-content>
+</ion-card>
+
+
+
+
     </ion-card-content>
   </ion-grid>
 </ion-content>
