@@ -212,52 +212,84 @@ async getMarksRecords(subjectId: number) {
 
 async submitMarks(subjectId: number, marksData: { student_id: number; ia1_marks?: number; ia2_marks?: number; total_ia?: number }[]) {
   try {
-    // Iterate over each student's marks and insert or update
+    // ✅ Ensure subject_id is included before passing to updateMarksSummary
+    const marksDataWithSubject = marksData.map(mark => ({
+      ...mark,
+      subject_id: subjectId, // ✅ Now explicitly adding subject_id
+    }));
+
+    // ✅ Insert marks into marks_log first
+    const logEntries = marksDataWithSubject.map(mark => ({
+      student_id: mark.student_id,
+      subject_id: mark.subject_id, // ✅ No more TypeScript error
+      ia1_marks: mark.ia1_marks,
+      ia2_marks: mark.ia2_marks,
+      total_ia: mark.total_ia,
+      date: new Date().toISOString().split('T')[0]
+    }));
+
+    const { error: logError } = await supabase.from('marks_log').insert(logEntries);
+
+    if (logError) {
+      console.error('❌ Error inserting into marks_log:', logError);
+      return { success: false, message: 'Failed to submit marks log' };
+    }
+
+    // ✅ Now call updateMarksSummary with correctly structured data
+    await this.updateMarksSummary(marksDataWithSubject);
+
+    return { success: true, message: 'Marks submitted successfully' };
+  } catch (err) {
+    console.error('❌ Unexpected error submitting marks:', err);
+    return { success: false, message: 'Unexpected error' };
+  }
+}
+
+private async updateMarksSummary(marksData: { student_id: number; subject_id: number; ia1_marks?: number; ia2_marks?: number; total_ia?: number }[]) {
+  try {
     for (const mark of marksData) {
-      const { data: existingMark, error } = await supabase
+      // Fetch existing summary
+      const { data: summary, error } = await supabase
         .from('marks_summary')
-        .select('id')
+        .select('id, ia1_marks, ia2_marks, total_ia')
         .eq('student_id', mark.student_id)
-        .eq('subject_id', subjectId)
+        .eq('subject_id', mark.subject_id) // ✅ Now using mark.subject_id
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error checking existing marks:', error);
+        console.error('❌ Error fetching marks summary:', error);
         continue;
       }
 
-      if (existingMark) {
+      if (summary) {
         // ✅ Update existing record
         const { error: updateError } = await supabase
           .from('marks_summary')
           .update({
-            ia1_marks: mark.ia1_marks,
-            ia2_marks: mark.ia2_marks,
-            total_ia: mark.total_ia
+            ia1_marks: mark.ia1_marks ?? summary.ia1_marks,
+            ia2_marks: mark.ia2_marks ?? summary.ia2_marks,
+            total_ia: mark.total_ia ?? summary.total_ia
           })
-          .eq('id', existingMark.id);
+          .eq('id', summary.id);
 
-        if (updateError) console.error('❌ Error updating marks:', updateError);
+        if (updateError) console.error('❌ Error updating marks summary:', updateError);
       } else {
         // ✅ Insert new record if not found
         const { error: insertError } = await supabase
           .from('marks_summary')
           .insert({
             student_id: mark.student_id,
-            subject_id: subjectId,
-            ia1_marks: mark.ia1_marks,
-            ia2_marks: mark.ia2_marks,
-            total_ia: mark.total_ia
+            subject_id: mark.subject_id, // ✅ Now using mark.subject_id
+            ia1_marks: mark.ia1_marks ?? 0,
+            ia2_marks: mark.ia2_marks ?? 0,
+            total_ia: mark.total_ia ?? 0
           });
 
-        if (insertError) console.error('❌ Error inserting marks:', insertError);
+        if (insertError) console.error('❌ Error inserting marks summary:', insertError);
       }
     }
-
-    return { success: true, message: 'Marks submitted successfully' };
   } catch (err) {
-    console.error('❌ Unexpected error submitting marks:', err);
-    return { success: false, message: 'Unexpected error' };
+    console.error('❌ Unexpected error updating marks summary:', err);
   }
 }
 

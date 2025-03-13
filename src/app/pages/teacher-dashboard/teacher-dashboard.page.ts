@@ -35,7 +35,7 @@ export class TeacherDashboardPage implements OnInit {
   selectedDate: string = new Date().toISOString().split('T')[0]; // ✅ Default to today
   attendanceEntries: Record<string, 'Present' | 'Absent'> = {};
   attendanceRecords: Record<string, { attended: number; total: number }> = {};
-  marksEntries: Record<string, number> = {}; // Stores marks inputs
+  marksEntries: { [key: number]: number } = {};  // ✅ Ensure it's properly initialized
   marksRecords: Record<string, { ia1: number; ia2: number; total: number }> = {}; // Stores fetched marks
   selectedIA: string = "IA1"; // Default IA selection
 
@@ -48,74 +48,78 @@ export class TeacherDashboardPage implements OnInit {
 
   async loadAllData() {
     try {
-      await this.getTeacherDetails();
-      await this.getStudentsByTeacher();
-      await this.loadTeacherData();
-      
-      if (this.selectedSubject) {
-        await this.loadAttendance(this.selectedSubject);
-      }
-    } catch (error) {
-      console.error("❌ Error loading data:", error);
-    }
-  }
-  async loadMarks(subjectId: number) {
-    try {
-      const records = await this.api.getMarksRecords(subjectId);
-  
-      this.marksRecords = {}; // ✅ Initialize it first
-      this.students.forEach(student => {
-        this.marksRecords[student.id] = { ia1: 0, ia2: 0, total: 0 }; // ✅ Use `0` instead of `null`
-      });
-  
-      // ✅ Map existing marks data
-      records.forEach(record => {
-        if (this.marksRecords[record.student_id]) {
-          this.marksRecords[record.student_id].ia1 = record.ia1_marks || 0;
-          this.marksRecords[record.student_id].ia2 = record.ia2_marks || 0;
-          this.marksRecords[record.student_id].total = record.total_ia || 0;
+        await this.getTeacherDetails();
+        await this.getStudentsByTeacher();
+        await this.loadTeacherData();
+
+        if (this.selectedSubject) {
+            await this.loadAttendance(this.selectedSubject);
+            await this.loadMarks(this.selectedSubject); // ✅ Added this line
         }
-      });
-  
-      console.log("📊 Marks Data:", this.marksRecords); // ✅ Debugging log
     } catch (error) {
-      console.error("❌ Error fetching marks records:", error);
+        console.error("❌ Error loading data:", error);
     }
+}
+
+  async loadMarks(subjectId: number) {
+    console.log("🔄 Fetching marks for subject:", subjectId); // ✅ Debug log before API call
+    try {
+        const records = await this.api.getMarksRecords(subjectId);
+        console.log("📊 Marks Data from API:", records); // ✅ Debug log after API call
+
+        this.marksRecords = records.reduce((acc, record) => {
+            acc[record.student_id] = {
+                ia1: record.ia1_marks || 0,
+                ia2: record.ia2_marks || 0,
+                total: record.total_ia || 0
+            };
+            return acc;
+        }, {} as Record<string, { ia1: number; ia2: number; total: number }>);
+
+        console.log("✅ Processed Marks Data:", this.marksRecords); // ✅ Debugging log
+    } catch (error) {
+        console.error("❌ Error fetching marks records:", error);
+    }
+}
+
+
+async submitMarks() {
+  if (!this.selectedSubject) {
+    alert("❌ Please select a subject before submitting marks.");
+    return;
   }
-  
-  
-  async submitMarks() {
-    if (!this.selectedSubject) {
-      alert("❌ Please select a subject before submitting marks.");
-      return;
-    }
-  
-    const marksData = this.students
-  .filter(student => this.marksEntries[student.id] !== undefined)
+
+  const marksData = this.students
+  .filter(student => {
+    const marks = Number(this.marksEntries[student.id]); // ✅ Convert to number
+    return !isNaN(marks) && marks !== 0; // ✅ Check if valid number
+  })
   .map(student => ({
     student_id: student.id,
     subject_id: this.selectedSubject,
-    ia1_marks: this.selectedIA === "IA1" ? this.marksEntries[student.id] ?? undefined : undefined,
-    ia2_marks: this.selectedIA === "IA2" ? this.marksEntries[student.id] ?? undefined : undefined,
-    total_ia: this.selectedIA === "TotalIA" ? this.marksEntries[student.id] ?? undefined : undefined,
+    ia1_marks: this.selectedIA === "IA1" ? Number(this.marksEntries[student.id]) || undefined : undefined,
+    ia2_marks: this.selectedIA === "IA2" ? Number(this.marksEntries[student.id]) || undefined : undefined,
+    total_ia: this.selectedIA === "TotalIA" ? Number(this.marksEntries[student.id]) || undefined : undefined,
     date: new Date().toISOString().split('T')[0]
   }));
 
-  
-    if (marksData.length === 0) {
-      alert("⚠ No marks entered.");
-      return;
-    }
-  
-    try {
-      const result = await this.api.submitMarks(this.selectedSubject, marksData);
-      alert(result.message || "✅ Marks submitted successfully.");
-      await this.loadMarks(this.selectedSubject);
-    } catch (error) {
-      console.error("❌ Error submitting marks:", error);
-      alert("⚠ Failed to submit marks.");
-    }
+
+
+  if (marksData.length === 0) {
+    alert("⚠ No marks entered.");
+    return;
   }
+
+  try {
+    const result = await this.api.submitMarks(this.selectedSubject, marksData);
+    alert(result.message || "✅ Marks submitted successfully.");
+    await this.loadMarks(this.selectedSubject);
+  } catch (error) {
+    console.error("❌ Error submitting marks:", error);
+    alert("⚠ Failed to submit marks.");
+  }
+}
+
   
   segmentChanged(event: any) {
     this.selectedYear = Number(event.detail.value);
@@ -289,13 +293,26 @@ export class TeacherDashboardPage implements OnInit {
     }
   }
 
-  logout() {
+  async logout() {
     console.log("🚪 Logging out...");
-
-    localStorage.removeItem('loggedInTeacher');
-    localStorage.removeItem('loggedInStudent');
-
-    this.api.logout();
-    this.navCtrl.navigateRoot('/login', { replaceUrl: true });  
+  
+    // Clear all user session data
+    localStorage.clear();
+  
+    // If API logout exists and is async, wait for it
+    if (this.api.logout) {
+      try {
+        await this.api.logout(); 
+      } catch (error) {
+        console.error("❌ API Logout Error:", error);
+      }
+    }
+  
+    // Navigate to login page & force reload
+    this.navCtrl.navigateRoot('/login', { replaceUrl: true });
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   }
+  
 }

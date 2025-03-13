@@ -94,7 +94,7 @@
     </ion-row>
 
     <ion-card-header>
-      <ion-card-title>Attendance for {{ currentDate }}</ion-card-title>
+      <ion-card-title>Attendance for {{ subjectsByYear[selectedYear][0]?.name || '❌ No Subject Found' }}</ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <ion-list>
@@ -106,29 +106,57 @@
         </ion-item>
       </ion-list>
 
-      <!-- ✅ Marks Entry Section -->
+     <!-- 📖 View Marks Section -->
+     <ion-card>
+      <ion-card-header>
+        <ion-card-title>📊 View Marks</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let student of filteredStudents">
+            <ion-label>
+              <h2>{{ student.name || "No Name Available" }}</h2>
+              <p>IA-1: {{ marksRecords[student.id].ia1 || 0 }}</p>
+              <p>IA-2: {{ marksRecords[student.id].ia2 || 0 }}</p>
+              <p>Total IA: {{ marksRecords[student.id].total || 0 }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+    
+
+<!-- ✏️ Update Marks Section -->
 <ion-card>
   <ion-card-header>
-    <ion-card-title>✍️ Enter Marks</ion-card-title>
+    <ion-card-title>✏️ Update Marks</ion-card-title>
   </ion-card-header>
   <ion-card-content>
     <ion-list>
       <ion-item *ngFor="let student of filteredStudents">
-        <ion-label>{{ student.name || "No Name Available" }}</ion-label>
-        <ion-input [(ngModel)]="marksRecords[student.id].ia1" placeholder="IA-1"></ion-input>
-        <ion-input [(ngModel)]="marksRecords[student.id].ia2" placeholder="IA-2"></ion-input>
-        <ion-input [(ngModel)]="marksRecords[student.id].total" placeholder="Total IA"></ion-input>
-        
-      </ion-item>
+        <ion-label position="stacked">
+          <h2>{{ student.name || "No Name Available" }}</h2>
+        </ion-label>
+        <ion-input [(ngModel)]="marksEntries[student.id]" type="number" placeholder="Enter Marks"></ion-input>
+      </ion-item>      
     </ion-list>
 
-    <ion-button expand="full" color="success" (click)="submitMarks()">
+    <!-- ✅ IA Selection -->
+    <ion-item>
+      <ion-label>Select IA</ion-label>
+      <ion-segment [(ngModel)]="selectedIA">
+        <ion-segment-button value="IA1">IA-1</ion-segment-button>
+        <ion-segment-button value="IA2">IA-2</ion-segment-button>
+        <ion-segment-button value="TotalIA">Total IA</ion-segment-button>
+      </ion-segment>
+    </ion-item>
+
+    <!-- ✅ Submit Marks Button -->
+    <ion-button expand="full" color="primary" (click)="submitMarks()" [disabled]="!selectedSubject">
       Submit Marks
     </ion-button>
   </ion-card-content>
 </ion-card>
-
-
 
 
     </ion-card-content>

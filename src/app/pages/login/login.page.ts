@@ -94,9 +94,9 @@ if (storedUser) {
       if (userType === 'teachers') redirectPath = '/teacher-dashboard';
       else if (userType === 'admin') redirectPath = '/admin-dashboard';
   
-      setTimeout(() => {
-        this.navctrl.navigateForward(redirectPath);
-      }, 1000);
+      
+      await this.navctrl.navigateForward(redirectPath);
+      
       
     } catch (error) {
       this.loading = false;
